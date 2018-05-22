@@ -25,6 +25,12 @@ func failOnError(err error, msg string) {
 }
 
 func main() {
+	/*
+	 * Below, we are using amqp.Dial which abstracts a connection towards our RMQ server.
+	 * This worries about authentication and procotol negotiation for us.
+	 * Please not that we are using 'defer' which worries about closing this connection after it has been used.
+	 * Defer is go builtin which is commonly used to simplify functions that perform clean-up actions.
+	 */
 	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
 	failOnError(err, "Failed to connect to RabbitMQ")
 	defer conn.Close()
