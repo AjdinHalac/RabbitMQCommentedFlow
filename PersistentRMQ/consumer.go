@@ -15,6 +15,9 @@ func failOnError(err error, msg string) {
 	}
 }
 
+/*
+ * In the consumer applicaton I will only comment what is not ubiquitous or not clear enough.
+ */
 func main() {
 	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
 	failOnError(err, "Failed to connect to RabbitMQ")
@@ -24,6 +27,15 @@ func main() {
 	failOnError(err, "Failed to open a channel")
 	defer ch.Close()
 
+	/*
+	 * The reason we will declare the queue again is because the case of starting the consumer before the producer will leave us with a crashed application if queue does not exist.
+	 * Remember that this method is idempotent and won't cause trouble if ran multiple times.
+	 * I want to crate a single task queue which is durable and won't lose my message after it stops executing.
+	 * If multiple consumers are started, every N-th consumer will get every N-th message.
+	 * The issue with this solution is in scenario where all odd message have a huge load while all the even messages are lightly processed.
+	 * Solution for this issue is allowing our consumers to read one message at a time.
+	 * Take a look at ch.Qos, prefetch count tells the RMQ server to have one message in the consumer till it gets ack-ed.
+	 */
 	q, err := ch.QueueDeclare(
 		"task_queue", // name
 		true,         // durable
