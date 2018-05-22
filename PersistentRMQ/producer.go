@@ -30,6 +30,9 @@ func main() {
 	 * This worries about authentication and procotol negotiation for us.
 	 * Please not that we are using 'defer' which worries about closing this connection after it has been used.
 	 * Defer is go builtin which is commonly used to simplify functions that perform clean-up actions.
+	 * It allows us to think about closing each file fight after opening it, guaranteeing that,
+	 * regardless of the number of return statements in the function, the files will be closed.
+	 * Deferred calls will get executed LIFO manner.
 	 */
 	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
 	failOnError(err, "Failed to connect to RabbitMQ")
@@ -59,6 +62,13 @@ func main() {
 	)
 	failOnError(err, "Failed to declare a queue")
 
+	/*
+	 * Channel.Publish is a method used to publish a byte message towards our RMQ server.
+	 * Following the RMQ flow, this message will get published to an exchange and aftewards passed into a correct Queue.
+	 * Parameters are as follows, exchange, routing key, mandadory, immediate and content. More on this in PubSubRMQ/Publisher.
+	 * What is important here is DeliveryMode: amqp.Peristent parameter in our content argument,
+	 * this tells the RMQ server to keep the passed message even if it gets shutdown.
+	 */
 	body := bodyFrom(os.Args)
 	err = ch.Publish(
 		"",     // Exchange
