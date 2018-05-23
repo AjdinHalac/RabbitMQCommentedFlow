@@ -25,6 +25,17 @@ func main() {
 	failOnError(err, "Failed to open a channel")
 	defer ch.Close()
 
+	/*
+	 * The core idea behind RMQ is that producer never sends any messages directly to a queue.
+	 * The producer can only send messages to an exchange. The exchange must know exactly what to do with recieved messages.
+	 * Should it be appended to a specific queue, all of them or none at all. These rules are defined by exchange type.
+	 * Exchange types:
+	 * - default - Empty string exchange, gets routed based on RoutingKey
+	 * - direct - Just like default exchange, the messages are routed based on RoutingKey as long as the queue is binded to the exchange
+	 * - topic - Routes messages based on matching between a message routing key and the pattern that was to used to bind a queue to the exchange.
+	 * - headers - Ignore the routing key and pass messages based on headers attibute. A message is considered matching if the header arguments equals value on binding
+	 * - fanout - Messages are sent to all of the queues and RoutingKey is ignored.
+	 */
 	err = ch.ExchangeDeclare(
 		"logs",   // name
 		"fanout", // type
@@ -36,6 +47,9 @@ func main() {
 	)
 	failOnError(err, "Failed to declare an exchange")
 
+	/*
+	 * Since we are publishing to an exchange a routing key is not mandatory because this exchange will ignore it due to the fanout type.
+	 */
 	body := bodyFrom(os.Args)
 	err = ch.Publish(
 		"logs", // Exchange
