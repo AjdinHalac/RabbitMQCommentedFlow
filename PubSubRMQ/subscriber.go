@@ -23,6 +23,9 @@ func main() {
 	failOnError(err, "Failed to open a channel")
 	defer ch.Close()
 
+	/*
+	 * Again, exchange and queue declaration is idempotent therefore we will declare it in subscriber as well.
+	 */
 	err = ch.ExchangeDeclare(
 		"logs",   // name
 		"fanout", // type
@@ -34,6 +37,11 @@ func main() {
 	)
 	failOnError(err, "Failed to declare an exchange")
 
+	/*
+	 * Previously, we've used named queues like 'task_queue'. That was necessary because the same queue was used by both consumer and producer.
+	 * Passing an empty string to queue declaration will let RMQ server auto-generate a name for us.
+	 * Another important parameter here is 'exlusive' flag which will delete the queue after the subscriber disconnects from it.
+	 */
 	q, err := ch.QueueDeclare(
 		"",    // name
 		false, // durable
@@ -44,6 +52,9 @@ func main() {
 	)
 	failOnError(err, "Failed to declare a queue")
 
+	/*
+	 * Now, after we've declared both the exchange and the queue we need to bind them.
+	 */
 	err = ch.QueueBind(
 		q.Name, // queue name
 		"",     // routing key
